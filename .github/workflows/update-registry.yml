@@ -1,0 +1,106 @@
+name: Update Registry (universal-shell-templates)
+
+# 模板库(templates/**)变更时，自动重新生成静态注册表(registry/)并重新签名 manifests.sig，
+# 生成产物提交回本仓库，供客户端 GitHub raw 直连。
+#
+# 工具链不在本仓库：本仓库只放模板，生成/签名代码在 universal-shell 的 shared crate 里，
+# 因此这里先把壳本体 checkout 到 .tooling/ 当工具链（模板语法与校验逻辑只有一份实现）。
+#
+# - push 到 main：生成 + 签名 + 提交回仓库
+# - pull_request：只校验「registry/ 是否与 templates/ 一致」，不一致即失败（不提交）
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'templates/**'
+  pull_request:
+    paths:
+      - 'templates/**'
+  workflow_dispatch:
+
+concurrency:
+  group: update-registry
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    name: generate + sign + commit registry
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout templates repo
+        uses: actions/checkout@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # 显式检出分支引用，避免处于 detached HEAD 时 commit 后无法 git push 回仓库
+          ref: ${{ github.ref }}
+
+      - name: Checkout universal-shell toolchain
+        id: toolchain
+        uses: actions/checkout@v7
+        # 壳本体仓库是私有仓库：GITHUB_TOKEN 只在当前仓库有效，跨仓库 checkout 会 404。
+        # 需要在本仓库 Secrets 配置 TOOLCHAIN_TOKEN（可读 universal-shell 的 PAT）。
+        # 未配置时不报红，而是跳过生成并给出 warning（见下一步），避免模板 PR 被卡住。
+        continue-on-error: true
+        with:
+          repository: Jonnyan404/universal-shell
+          ref: main
+          path: .tooling
+          token: ${{ secrets.TOOLCHAIN_TOKEN || github.token }}
+
+      - name: Toolchain unavailable — how to fix
+        if: steps.toolchain.outcome != 'success'
+        run: |
+          echo "::warning::未能 checkout 工具链仓库 universal-shell（私有仓库）：请在本仓库 Settings → Secrets and variables → Actions 里新增 TOOLCHAIN_TOKEN（可读该仓库的 PAT），模板变更后才会自动重新生成 registry/"
+
+      - name: Set up Rust
+        if: steps.toolchain.outcome == 'success'
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        if: steps.toolchain.outcome == 'success'
+        with:
+          workspaces: .tooling
+
+      - name: Generate registry from templates
+        if: steps.toolchain.outcome == 'success'
+        run: |
+          cargo run --manifest-path .tooling/Cargo.toml -p shared --example generate_registry -- \
+            "$GITHUB_WORKSPACE/registry" "$GITHUB_WORKSPACE/templates"
+
+      - name: Sign manifest
+        if: steps.toolchain.outcome == 'success'
+        run: |
+          SEED="${REGISTRY_SEED:-0000000000000000000000000000000000000000000000000000000000000001}"
+          cargo run --manifest-path .tooling/Cargo.toml -p shared --example sign_registry -- \
+            registry/manifests.json "$SEED"
+        env:
+          REGISTRY_SEED: ${{ secrets.REGISTRY_SEED }}
+
+      - name: Check registry is in sync (PR only)
+        if: github.event_name == 'pull_request' && steps.toolchain.outcome == 'success'
+        run: |
+          if [ -n "$(git status --porcelain registry/)" ]; then
+            echo "::error::registry/ 与 templates/ 不一致：请在本地重跑 generate_registry + sign_registry 并提交生成物"
+            git --no-pager diff --stat registry/
+            exit 1
+          fi
+          echo "registry in sync with templates"
+
+      - name: Commit registry changes
+        if: github.event_name != 'pull_request' && steps.toolchain.outcome == 'success'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain registry/)" ]; then
+            git add registry/
+            git commit -m "Update static registry from templates"
+            git push
+            echo "registry updated & pushed"
+          else
+            echo "registry unchanged, nothing to commit"
+          fi

@@ -1,0 +1,99 @@
+name: Verify Templates (universal-shell-templates)
+
+# 定时(每天 UTC 12:00)真去上游校验模板是否仍可用，资产命名/直链变化会自动失败告警。
+# 工具链在 universal-shell 仓库（shared crate 的 examples），故先 checkout 到 .tooling/。
+
+on:
+  schedule:
+    - cron: '0 12 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: verify_templates (${{ matrix.os }})
+    # 真实验证各 OS 候选：macOS->darwin, ubuntu->linux
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, ubuntu-latest]
+    steps:
+      - name: Checkout templates repo
+        uses: actions/checkout@v7
+
+      - name: Checkout universal-shell toolchain
+        id: toolchain
+        uses: actions/checkout@v7
+        # 壳本体是私有仓库：跨仓库 checkout 需要 TOOLCHAIN_TOKEN（可读它的 PAT），
+        # 否则 GITHUB_TOKEN 只对本仓库有效会 404。未配置则跳过校验并给 warning。
+        continue-on-error: true
+        with:
+          repository: Jonnyan404/universal-shell
+          ref: main
+          path: .tooling
+          token: ${{ secrets.TOOLCHAIN_TOKEN || github.token }}
+
+      - name: Toolchain unavailable — how to fix
+        if: steps.toolchain.outcome != 'success'
+        run: |
+          echo "::warning::未能 checkout 工具链仓库 universal-shell（私有仓库）：请配置本仓库 Secrets 的 TOOLCHAIN_TOKEN（可读 universal-shell 的 PAT），否则跳过模板校验"
+
+      - name: Set up Rust
+        if: steps.toolchain.outcome == 'success'
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        if: steps.toolchain.outcome == 'success'
+        with:
+          workspaces: .tooling
+
+      - name: verify_templates
+        if: steps.toolchain.outcome == 'success'
+        run: >-
+          cargo run --manifest-path .tooling/Cargo.toml -p shared --example verify_templates --
+          "$GITHUB_WORKSPACE/templates" "$GITHUB_WORKSPACE/example-third-party/templates"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  e2e:
+    name: e2e representative download (macOS)
+    runs-on: macos-15
+    steps:
+      - name: Checkout templates repo
+        uses: actions/checkout@v7
+
+      - name: Checkout universal-shell toolchain
+        id: toolchain
+        uses: actions/checkout@v7
+        continue-on-error: true
+        with:
+          repository: Jonnyan404/universal-shell
+          ref: main
+          path: .tooling
+          token: ${{ secrets.TOOLCHAIN_TOKEN || github.token }}
+
+      - name: Toolchain unavailable — how to fix
+        if: steps.toolchain.outcome != 'success'
+        run: |
+          echo "::warning::未能 checkout 工具链仓库 universal-shell（私有仓库）：请配置本仓库 Secrets 的 TOOLCHAIN_TOKEN（可读 universal-shell 的 PAT），否则跳过 e2e 校验"
+
+      - name: Set up Rust
+        if: steps.toolchain.outcome == 'success'
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        if: steps.toolchain.outcome == 'success'
+        with:
+          workspaces: .tooling
+
+      - name: e2e download (representative subset)
+        if: steps.toolchain.outcome == 'success'
+        run: >-
+          cargo run --manifest-path .tooling/Cargo.toml -p shared --example e2e_download --
+          dufs miniserve filebrowser
+        env:
+          US_TEMPLATES_DIR: ${{ github.workspace }}/templates
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
