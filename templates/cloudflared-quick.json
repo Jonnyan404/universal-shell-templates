@@ -1,0 +1,35 @@
+{
+  "id": "cloudflared-quick",
+  "name": "Cloudflare Tunnel (临时分享)",
+  "description": "cloudflared — 临时分享：不用 Cloudflare 账号、不用 Token，启动后立刻给你一个 https://<随机>.trycloudflare.com 的公网地址，指向本机服务。启动后在日志里找那行 trycloudflare.com 的网址。⚠️ 无可用性保证、每次重启换域名，只适合临时演示；要固定域名请用 Token 版。",
+  "repo": "cloudflare/cloudflared",
+  "binary": "cloudflared",
+  "category": "proxy",
+  "assets": {
+    "darwin": {
+      "candidates": ["cloudflared-darwin-{arch}.tgz"],
+      "format": "tar.gz",
+      "mode": "single",
+      "member": "cloudflared"
+    },
+    "linux": {
+      "candidates": ["cloudflared-linux-{arch}"],
+      "format": "raw",
+      "mode": "raw"
+    },
+    "windows": {
+      "candidates": ["cloudflared-windows-amd64.exe"],
+      "format": "raw",
+      "mode": "raw"
+    }
+  },
+  "arch_map": {
+    "x86_64": "amd64",
+    "aarch64": "arm64"
+  },
+  "fields": [
+    { "key": "url", "kind": "string", "label": "本地服务地址", "default": "http://127.0.0.1:8080", "required": true, "placeholder": "http://127.0.0.1:8080" },
+    { "key": "args_extra", "kind": "string", "label": "附加参数", "default": "", "placeholder": "--protocol http2 --edge-ip-version 4" }
+  ],
+  "args": ["tunnel", "--no-autoupdate", "--url", "{url}", "{args_extra}"]
+}

@@ -1,0 +1,40 @@
+{
+  "id": "clip9",
+  "name": "clip9",
+  "description": "clip9 — 自托管跨设备剪贴板（文本/图片/文件实时互传），cloud-clipboard-go 的 Rust 重写版。单静态二进制、内嵌前端，默认只绑定 127.0.0.1，数据落在 -data 目录。",
+  "repo": "Jonnyan404/clip9",
+  "binary": "clip9-cli",
+  "category": "clipboard",
+  "assets": {
+    "darwin": {
+      "candidates": ["clip9-cli-v{version}-macos-{arch}.tar.gz"],
+      "format": "tar.gz",
+      "mode": "single",
+      "member": "clip9-cli-v{version}-macos-{arch}/clip9-cli"
+    },
+    "linux": {
+      "candidates": ["clip9-cli-v{version}-linux-{arch}.tar.gz"],
+      "format": "tar.gz",
+      "mode": "single",
+      "member": "clip9-cli-v{version}-linux-{arch}/clip9-cli"
+    },
+    "windows": {
+      "candidates": ["clip9-cli-v{version}-windows-{arch}.zip"],
+      "format": "zip",
+      "mode": "single",
+      "member": "clip9-cli-v{version}-windows-{arch}/clip9-cli.exe"
+    }
+  },
+  "arch_map": {
+    "x86_64": "x86_64",
+    "aarch64": "aarch64"
+  },
+  "fields": [
+    { "key": "host", "kind": "string", "label": "监听地址", "default": "127.0.0.1", "placeholder": "127.0.0.1" },
+    { "key": "port", "kind": "string", "label": "端口", "default": "9501", "placeholder": "9501" },
+    { "key": "auth", "kind": "string", "label": "访问密码", "default": "", "placeholder": "留空 = 无需密码" },
+    { "key": "data", "kind": "directory", "label": "数据目录", "default": "", "placeholder": "redb 库与 uploads/ 的根，留空 = 当前工作目录下的 data/" },
+    { "key": "args_extra", "kind": "string", "label": "附加参数", "default": "", "placeholder": "-config /path/config.json -allow-origin https://clip.example.com -prefix /clip9" }
+  ],
+  "args": ["-host", "{host}", "-port", "{port}", "-auth", "{auth}", "-data", "{data}", "{args_extra}"]
+}

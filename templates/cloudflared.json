@@ -1,0 +1,35 @@
+{
+  "id": "cloudflared",
+  "name": "Cloudflare Tunnel (Token)",
+  "description": "cloudflared — 用自己账号的隧道 Token 建立正式隧道，把本机服务经 Cloudflare 边缘暴露出去，无需公网 IP 与开放端口。Token 在 Zero Trust → Networks → Tunnels 里创建隧道后复制；域名与路由都在面板里配，本模板不读本地配置文件。",
+  "repo": "cloudflare/cloudflared",
+  "binary": "cloudflared",
+  "category": "proxy",
+  "assets": {
+    "darwin": {
+      "candidates": ["cloudflared-darwin-{arch}.tgz"],
+      "format": "tar.gz",
+      "mode": "single",
+      "member": "cloudflared"
+    },
+    "linux": {
+      "candidates": ["cloudflared-linux-{arch}"],
+      "format": "raw",
+      "mode": "raw"
+    },
+    "windows": {
+      "candidates": ["cloudflared-windows-amd64.exe"],
+      "format": "raw",
+      "mode": "raw"
+    }
+  },
+  "arch_map": {
+    "x86_64": "amd64",
+    "aarch64": "arm64"
+  },
+  "fields": [
+    { "key": "token", "kind": "string", "label": "隧道 Token", "default": "", "required": true, "placeholder": "Zero Trust → Networks → Tunnels 里复制的 Token" },
+    { "key": "args_extra", "kind": "string", "label": "附加参数", "default": "", "placeholder": "--protocol http2 --edge-ip-version 4" }
+  ],
+  "args": ["tunnel", "--no-autoupdate", "run", "--token", "{token}", "{args_extra}"]
+}

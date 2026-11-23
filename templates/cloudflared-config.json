@@ -1,0 +1,35 @@
+{
+  "id": "cloudflared-config",
+  "name": "Cloudflare Tunnel (配置文件)",
+  "description": "cloudflared — 用本地 config.yml 建立隧道（自建/自管场景）。config.yml 里写 tunnel: <UUID> 与 credentials-file: <凭据.json>，再配 ingress 规则；写好之后直接启动即可。若 config.yml 里没写 tunnel:，在「附加参数」里补一个隧道名/UUID。",
+  "repo": "cloudflare/cloudflared",
+  "binary": "cloudflared",
+  "category": "proxy",
+  "assets": {
+    "darwin": {
+      "candidates": ["cloudflared-darwin-{arch}.tgz"],
+      "format": "tar.gz",
+      "mode": "single",
+      "member": "cloudflared"
+    },
+    "linux": {
+      "candidates": ["cloudflared-linux-{arch}"],
+      "format": "raw",
+      "mode": "raw"
+    },
+    "windows": {
+      "candidates": ["cloudflared-windows-amd64.exe"],
+      "format": "raw",
+      "mode": "raw"
+    }
+  },
+  "arch_map": {
+    "x86_64": "amd64",
+    "aarch64": "arm64"
+  },
+  "fields": [
+    { "key": "config", "kind": "file", "label": "config.yml", "default": "", "required": true, "filter": "*.yml,*.yaml" },
+    { "key": "args_extra", "kind": "string", "label": "附加参数", "default": "", "placeholder": "隧道名/UUID（config.yml 里没写 tunnel: 时必填），或 --protocol http2" }
+  ],
+  "args": ["tunnel", "--config", "{config}", "--no-autoupdate", "run", "{args_extra}"]
+}

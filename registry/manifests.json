@@ -1,5 +1,5 @@
 {
-  "revision": "rev-3b76c81d2f6e5470",
+  "revision": "rev-364da3b05e226a99",
   "categories": [
     "file-sharing",
     "sync",
@@ -10,11 +10,32 @@
   ],
   "templates": [
     {
-      "id": "cloud-clipboard-go",
-      "name": "cloud-clipboard-go",
+      "id": "clip9",
+      "name": "clip9",
       "category": "clipboard",
-      "description": "cloud-clipboard-go — 云剪贴板核心程序 (Go)，支持监听/端口/配置/数据目录配置。",
-      "repo": "Jonnyan404/cloud-clipboard-go"
+      "description": "clip9 — 自托管跨设备剪贴板（文本/图片/文件实时互传），cloud-clipboard-go 的 Rust 重写版。单静态二进制、内嵌前端，默认只绑定 127.0.0.1，数据落在 -data 目录。",
+      "repo": "Jonnyan404/clip9"
+    },
+    {
+      "id": "cloudflared",
+      "name": "Cloudflare Tunnel (Token)",
+      "category": "proxy",
+      "description": "cloudflared — 用自己账号的隧道 Token 建立正式隧道，把本机服务经 Cloudflare 边缘暴露出去，无需公网 IP 与开放端口。Token 在 Zero Trust → Networks → Tunnels 里创建隧道后复制；域名与路由都在面板里配，本模板不读本地配置文件。",
+      "repo": "cloudflare/cloudflared"
+    },
+    {
+      "id": "cloudflared-config",
+      "name": "Cloudflare Tunnel (配置文件)",
+      "category": "proxy",
+      "description": "cloudflared — 用本地 config.yml 建立隧道（自建/自管场景）。config.yml 里写 tunnel: <UUID> 与 credentials-file: <凭据.json>，再配 ingress 规则；写好之后直接启动即可。若 config.yml 里没写 tunnel:，在「附加参数」里补一个隧道名/UUID。",
+      "repo": "cloudflare/cloudflared"
+    },
+    {
+      "id": "cloudflared-quick",
+      "name": "Cloudflare Tunnel (临时分享)",
+      "category": "proxy",
+      "description": "cloudflared — 临时分享：不用 Cloudflare 账号、不用 Token，启动后立刻给你一个 https://<随机>.trycloudflare.com 的公网地址，指向本机服务。启动后在日志里找那行 trycloudflare.com 的网址。⚠️ 无可用性保证、每次重启换域名，只适合临时演示；要固定域名请用 Token 版。",
+      "repo": "cloudflare/cloudflared"
     },
     {
       "id": "croc-receive",

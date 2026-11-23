@@ -7,17 +7,17 @@
   "category": "vcs",
   "assets": {
     "darwin": {
-      "candidates": ["gitea-{version}-darwin-10.12-arm64", "gitea-{version}-darwin-10.12-amd64"],
+      "candidates": ["gitea-{version}-darwin-{arch}", "gitea-{version}-darwin-10.12-{arch}"],
       "format": "raw",
       "mode": "raw"
     },
     "linux": {
-      "candidates": ["gitea-{version}-linux-amd64"],
+      "candidates": ["gitea-{version}-linux-{arch}"],
       "format": "raw",
       "mode": "raw"
     },
     "windows": {
-      "candidates": ["gitea-{version}-windows-4.0-amd64.exe"],
+      "candidates": ["gitea-{version}-windows-{arch}.exe", "gitea-{version}-windows-4.0-amd64.exe"],
       "format": "raw",
       "mode": "raw"
     }
